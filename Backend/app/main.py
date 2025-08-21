@@ -11,7 +11,12 @@ app = FastAPI(
 )
 
 # load spaCy model once
+# BALANCED ACCURACY AND SPEED - RECOMMENEDED
 nlp = spacy.load("en_core_web_md")
+
+# HIGHER ACCURACY SLOWER
+# nlp = spacy.load("en_core_web_lg")
+
 
 def preprocess(text: str) -> str:
     text = text.lower()
