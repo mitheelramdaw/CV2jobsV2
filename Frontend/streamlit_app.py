@@ -1,6 +1,9 @@
 import streamlit as st
 import matplotlib.pyplot as plt
 import seaborn as sns
+import requests
+
+API_URL = "http://127.0.0.1:8000"  # replace with your DigitalOcean URL later
 
 def main():
     plt.style.use('dark_background')
@@ -23,6 +26,15 @@ def main():
             st.markdown("👤 Mikhaar Ramdaw")
         st.markdown("---")
 
+    # Fetch jobs from backend
+    try:
+        jobs = requests.get(f"{API_URL}/jobs").json()["jobs"]
+        job_options = {job["title"]: job["id"] for job in jobs}
+        job_title = st.selectbox("Select Job", list(job_options.keys())) if job_options else None
+    except Exception:
+        st.error("⚠️ Could not connect to backend. Make sure FastAPI is running.")
+        return
+
     # Upload CV section
     st.title("📄 **Upload CVs**")
     uploaded_files = st.file_uploader(
@@ -34,28 +46,33 @@ def main():
     st.write("")
 
     # Action button
-    if st.button("Rank Jobs", key="rank_button") and uploaded_files:
-        # Placeholder until hooked up with FastAPI
-        st.info("✅ CVs uploaded. Ranking will be handled by backend API.")
-        # Later you can call FastAPI here and display results
-        # Example placeholder visualization:
-        example_scores = [75, 60, 40]
-        plt.figure(figsize=(10, 6))
-        ax = sns.barplot(
-            x=list(range(1, len(example_scores) + 1)), 
-            y=example_scores, 
-            palette=['red', 'blue', 'purple']
-        )
-        plt.title("Job Similarity Scores", color='white')
-        plt.xlabel("Job", color='white')
-        plt.ylabel("Similarity Score (%)", color='white')
-        plt.ylim(0, 100)
-        plt.xticks(ticks=list(range(0, len(example_scores) + 1)), color='white')
-        plt.yticks(color='white')
-        for idx, score in enumerate(example_scores):
-            ax.text(idx, score + 1, f"{score:.2f}%", ha="center", color='white')
-        st.pyplot(plt)
-        st.write("")
+    if st.button("Rank Jobs", key="rank_button") and uploaded_files and job_title:
+        job_id = job_options[job_title]
+        scores = []
+
+        for uploaded_file in uploaded_files:
+            files = {"file": uploaded_file}
+            data = {"job_id": job_id}
+            res = requests.post(f"{API_URL}/upload_cv", files=files, data=data)
+
+            if res.status_code == 200:
+                result = res.json()
+                scores.append({"cv": uploaded_file.name, "score": result["score"]})
+                st.success(f"{uploaded_file.name} scored {result['score']:.2f}%")
+            else:
+                st.error(f"❌ Failed to process {uploaded_file.name}")
+
+        # Plot results
+        if scores:
+            plt.figure(figsize=(10, 6))
+            labels = [s["cv"] for s in scores]
+            values = [s["score"] for s in scores]
+            ax = sns.barplot(x=labels, y=values, palette="viridis")
+            plt.title("CV Match Scores", color="white")
+            plt.ylabel("Similarity (%)", color="white")
+            for idx, score in enumerate(values):
+                ax.text(idx, score + 1, f"{score:.2f}%", ha="center", color="white")
+            st.pyplot(plt)
 
 if __name__ == "__main__":
     main()
