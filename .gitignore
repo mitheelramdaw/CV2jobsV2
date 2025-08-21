@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.pdb
+*.egg-info/
+*.egg
+*.manifest
+*.spec
+
+# Virtual Environments
+venv/
+.env
+*.venv
+.venv/
+
+# Environment variables
+*.env
+.env.*
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*.bak
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+*.sqlite3
+
+# Docker / Build
+dist/
+build/
+*.egg-info/
+*.tar.gz
+*.whl
+docker-compose.override.yml
+
+# Streamlit
+.streamlit/
